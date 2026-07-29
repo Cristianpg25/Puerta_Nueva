@@ -118,7 +118,19 @@
         .hero {
             height: 100vh; min-height: 700px; position: relative; display: flex;
             align-items: center; justify-content: center;
-            background: url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat fixed;
+            overflow: hidden;
+            background-color: var(--negro-suave);
+        }
+        /* Fondo con parallax por JS (transform), en vez de background-attachment:fixed,
+           que no funciona en Safari/Chrome de móvil. Funciona igual en todos los dispositivos. */
+        .parallax-bg {
+            position: absolute;
+            top: -15%; left: 0;
+            width: 100%; height: 130%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            will-change: transform;
         }
         .hero-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(43,43,43,0.7), rgba(43,43,43,0.4)); }
         .hero-content { position: relative; z-index: 2; color: var(--blanco-roto); max-width: 800px; text-align: center; display: flex; flex-direction: column; align-items: center; }
@@ -150,7 +162,7 @@
         .cuisine-info p { color: var(--beige-arena); font-size: 0.9rem; }
 
         /* Terrace Atmosphere */
-        .terrace-atmosphere { height: 60vh; background: url('https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat fixed; display: flex; align-items: center; justify-content: center; text-align: center; position: relative; }
+        .terrace-atmosphere { height: 60vh; background-color: var(--negro-suave); display: flex; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; }
         .terrace-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(43,43,43,0.6); }
         .terrace-content { position: relative; z-index: 2; color: var(--blanco-roto); }
 
@@ -164,47 +176,52 @@
 
         /* =============================================
            MARQUEE — Pizzas & Pastas
+           Animación 100% CSS: no depende de JS ni de que
+           terminen de cargar imágenes/eventos, así que no
+           puede "fallar" en la primera carga en móvil.
            ============================================= */
         .marquee-section { background-color: var(--negro-suave); padding: 4rem 0; overflow: hidden; }
         .marquee-header { text-align: center; margin-bottom: 3rem; }
-        .marquee-container { display: flex; flex-direction: column; gap: 2rem; }
+        .marquee-container { display: flex; flex-direction: column; gap: 1.25rem; }
 
         /* El .marquee-row es la ventana que recorta el contenido */
-        .marquee-row {
-            overflow: hidden;
-            width: 100%;
-            user-select: none;
-            cursor: grab;
-        }
-        .marquee-row:active { cursor: grabbing; }
+        .marquee-row { overflow: hidden; width: 100%; }
 
-        /* El .marquee-track es el carril que se mueve */
+        /* El .marquee-track es el carril que se mueve; el contenido está
+           duplicado en el HTML, así que -50% es exactamente una vuelta */
         .marquee-track {
             display: flex;
-            gap: 2rem;
-            width: max-content;   /* ← CLAVE: que el track sea tan ancho como su contenido */
-            will-change: transform;
+            gap: 1rem;
+            width: max-content;
+            animation: marquee-scroll 34s linear infinite;
+        }
+        #pizza-track { animation-direction: reverse; }
+
+        .marquee-row:hover .marquee-track { animation-play-state: paused; }
+
+        @keyframes marquee-scroll {
+            from { transform: translate3d(0, 0, 0); }
+            to   { transform: translate3d(-50%, 0, 0); }
         }
 
         .marquee-item {
-            flex: 0 0 400px;
-            height: 280px;
+            flex: 0 0 220px;
+            height: 150px;
             position: relative;
             border-radius: 4px;
             overflow: hidden;
             border: 1px solid var(--marron-madera);
-            pointer-events: none;
         }
-        .marquee-item img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; user-select: none; }
+        .marquee-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .marquee-item::after {
             content: attr(data-name);
             position: absolute; bottom: 0; left: 0; width: 100%;
-            padding: 0.5rem;
+            padding: 0.4rem;
             background: rgba(43,43,43,0.85);
             color: var(--dorado-suave);
             text-align: center;
             font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             letter-spacing: 1px;
         }
 
@@ -263,10 +280,57 @@
 
         /* Reservations */
         #reservations { background-color: var(--marron-madera); }
-        .reservations-form { max-width: 800px; margin: 0 auto; background: var(--negro-suave); padding: 3rem; border: 1px solid var(--dorado-suave); }
+
+        .reservations-form {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--negro-suave);
+            padding: 3.5rem 3rem 3rem;
+            border: 1px solid var(--dorado-suave);
+            border-radius: 6px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(184,155,94,0.12);
+        }
+        /* Marcas de esquina doradas para un toque más personalizado */
+        .reservations-form::before, .reservations-form::after {
+            content: '';
+            position: absolute;
+            width: 32px; height: 32px;
+            border: 2px solid var(--dorado-suave);
+            opacity: 0.8;
+        }
+        .reservations-form::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+        .reservations-form::after { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+        .reservations-form-tagline {
+            display: block;
+            text-align: center;
+            font-size: 1.3rem;
+            color: var(--beige-arena);
+            margin-bottom: 2rem;
+        }
+
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
-        .form-group input, .form-group select { width: 100%; padding: 1rem; border: 1px solid var(--marron-madera); background: var(--negro-suave); font-family: 'Inter', sans-serif; color: var(--blanco-roto); }
+        .form-group input, .form-group select {
+            width: 100%;
+            height: 3.375rem;
+            padding: 0 1rem;
+            border: 1px solid var(--marron-madera);
+            background: var(--negro-suave);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: var(--blanco-roto);
+            color-scheme: dark;
+            border-radius: 2px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
         .form-group input::placeholder { color: var(--beige-arena); }
+        .form-group input:hover, .form-group select:hover { border-color: var(--dorado-suave); }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--dorado-suave);
+            box-shadow: 0 0 0 3px rgba(184, 155, 94, 0.2);
+        }
 
         /* Contact */
         #contact { background-color: var(--negro-suave); padding-bottom: 6rem; }
@@ -297,8 +361,6 @@
         }
         @media (max-width: 768px) {
             section { padding: 4rem 0; }
-            /* background-attachment: fixed no funciona en iOS Safari y puede solapar con el header fijo */
-            .hero, .terrace-atmosphere { background-attachment: scroll; }
             .nav-links, .nav-phone { display: none; }
             .logo-img { height: 40px; }
             .hero-logo-img { max-width: 70%; }
@@ -306,7 +368,7 @@
             .cuisine-grid, .chef-grid { grid-template-columns: 1fr; }
             .meats-grid { grid-template-columns: 1fr 1fr; gap: 1rem; }
             .form-row { grid-template-columns: 1fr; }
-            .marquee-item { flex: 0 0 300px; height: 200px; }
+            .marquee-item { flex: 0 0 160px; height: 110px; }
             .gallery-card { flex: 0 0 280px; height: 360px; }
             .map-container { height: 300px; margin-top: 2rem; }
         }
@@ -339,6 +401,7 @@
 
     <!-- Hero -->
     <section class="hero" id="hero">
+        <div class="parallax-bg" style="background-image: url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=2070&auto=format&fit=crop');"></div>
         <div class="hero-overlay"></div>
         <div class="container hero-content">
             <img src="https://z-cdn-media.chatglm.cn/files/440ad22c-20d1-4a39-a377-8ea4a96805fd.png?auth_key=1882116034-3a0b8891563c4ee4ad56bae456b47cf2-0-b74744cc25fb916751b11a872e8be7d2" alt="Puerta Nueva Gastro Bar" class="hero-logo-img" data-aos="zoom-in" data-aos-duration="1000">
@@ -395,6 +458,7 @@
 
     <!-- Atardeceres Mediterráneos -->
     <section class="terrace-atmosphere">
+        <div class="parallax-bg" style="background-image: url('https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=2070&auto=format&fit=crop');"></div>
         <div class="terrace-overlay"></div>
         <div class="terrace-content container" data-aos="fade-up">
             <h2 style="color: var(--blanco-roto); margin-bottom: 1rem;">Atardeceres Mediterráneos</h2>
@@ -424,29 +488,41 @@
         <div class="container marquee-header" data-aos="fade-up">
             <h2>Pizzas y Pastas Caseras</h2>
             <div class="divider"></div>
-            <p>Arrastra para descubrir nuestra selección</p>
+            <p>Nuestra selección, siempre en movimiento</p>
         </div>
         <div class="marquee-container">
-            <!-- Fila 1: Pizzas -->
+            <!-- Fila 1: Pizzas (contenido duplicado para el bucle CSS infinito) -->
             <div class="marquee-row" id="pizza-row">
                 <div class="marquee-track" id="pizza-track">
-                    <div class="marquee-item" data-name="Margherita"><img src="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=2069&auto=format&fit=crop" alt="Pizza Margherita"></div>
-                    <div class="marquee-item" data-name="Prosciutto"><img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=2070&auto=format&fit=crop" alt="Pizza Prosciutto"></div>
-                    <div class="marquee-item" data-name="Quattro Formaggi"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=2070&auto=format&fit=crop" alt="Pizza Quattro Formaggi"></div>
-                    <div class="marquee-item" data-name="Trufa"><img src="https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?q=80&w=2070&auto=format&fit=crop" alt="Pizza Trufa"></div>
-                    <div class="marquee-item" data-name="Diavola"><img src="https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f?q=80&w=2070&auto=format&fit=crop" alt="Pizza Diavola"></div>
-                    <div class="marquee-item" data-name="Carbonara"><img src="https://images.unsplash.com/photo-1571066811602-716837d681de?q=80&w=2070&auto=format&fit=crop" alt="Pizza Carbonara"></div>
+                    <div class="marquee-item" data-name="Margherita"><img src="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=2069&auto=format&fit=crop" alt="Pizza Margherita" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Prosciutto"><img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=2070&auto=format&fit=crop" alt="Pizza Prosciutto" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Quattro Formaggi"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=2070&auto=format&fit=crop" alt="Pizza Quattro Formaggi" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Trufa"><img src="https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?q=80&w=2070&auto=format&fit=crop" alt="Pizza Trufa" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Diavola"><img src="https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f?q=80&w=2070&auto=format&fit=crop" alt="Pizza Diavola" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Carbonara"><img src="https://images.unsplash.com/photo-1571066811602-716837d681de?q=80&w=2070&auto=format&fit=crop" alt="Pizza Carbonara" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Margherita" aria-hidden="true"><img src="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=2069&auto=format&fit=crop" alt="" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Prosciutto" aria-hidden="true"><img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=2070&auto=format&fit=crop" alt="" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Quattro Formaggi" aria-hidden="true"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=2070&auto=format&fit=crop" alt="" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Trufa" aria-hidden="true"><img src="https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?q=80&w=2070&auto=format&fit=crop" alt="" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Diavola" aria-hidden="true"><img src="https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f?q=80&w=2070&auto=format&fit=crop" alt="" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Carbonara" aria-hidden="true"><img src="https://images.unsplash.com/photo-1571066811602-716837d681de?q=80&w=2070&auto=format&fit=crop" alt="" loading="lazy"></div>
                 </div>
             </div>
-            <!-- Fila 2: Pastas -->
+            <!-- Fila 2: Pastas (contenido duplicado para el bucle CSS infinito) -->
             <div class="marquee-row" id="pasta-row">
                 <div class="marquee-track" id="pasta-track">
-                    <div class="marquee-item" data-name="Ravioli de Carne"><img src="https://images.unsplash.com/photo-1587740908075-9e245070dfaa?q=80&w=2070&auto=format&fit=crop" alt="Ravioli"></div>
-                    <div class="marquee-item" data-name="Spaghetti Carbonara"><img src="https://images.unsplash.com/photo-1612874742237-6526221588e3?q=80&w=2070&auto=format&fit=crop" alt="Carbonara"></div>
-                    <div class="marquee-item" data-name="Lasaña Clásica"><img src="https://images.unsplash.com/photo-1574894709920-11b28e7367e3?q=80&w=2070&auto=format&fit=crop" alt="Lasaña"></div>
-                    <div class="marquee-item" data-name="Tagliatelle al Ragú"><img src="https://images.unsplash.com/photo-1551183053-bf91a1d81141?q=80&w=2070&auto=format&fit=crop" alt="Tagliatelle"></div>
-                    <div class="marquee-item" data-name="Penne Arrabbiata"><img src="https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?q=80&w=2070&auto=format&fit=crop" alt="Penne"></div>
-                    <div class="marquee-item" data-name="Fettuccine Alfredo"><img src="https://images.unsplash.com/photo-1645112411341-6c4fd023714a?q=80&w=2070&auto=format&fit=crop" alt="Fettuccine"></div>
+                    <div class="marquee-item" data-name="Ravioli de Carne"><img src="https://images.unsplash.com/photo-1587740908075-9e245070dfaa?q=80&w=2070&auto=format&fit=crop" alt="Ravioli" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Spaghetti Carbonara"><img src="https://images.unsplash.com/photo-1612874742237-6526221588e3?q=80&w=2070&auto=format&fit=crop" alt="Carbonara" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Lasaña Clásica"><img src="https://images.unsplash.com/photo-1574894709920-11b28e7367e3?q=80&w=2070&auto=format&fit=crop" alt="Lasaña" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Tagliatelle al Ragú"><img src="https://images.unsplash.com/photo-1551183053-bf91a1d81141?q=80&w=2070&auto=format&fit=crop" alt="Tagliatelle" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Penne Arrabbiata"><img src="https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?q=80&w=2070&auto=format&fit=crop" alt="Penne" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Fettuccine Alfredo"><img src="https://images.unsplash.com/photo-1645112411341-6c4fd023714a?q=80&w=2070&auto=format&fit=crop" alt="Fettuccine" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Ravioli de Carne" aria-hidden="true"><img src="https://images.unsplash.com/photo-1587740908075-9e245070dfaa?q=80&w=2070&auto=format&fit=crop" alt="" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Spaghetti Carbonara" aria-hidden="true"><img src="https://images.unsplash.com/photo-1612874742237-6526221588e3?q=80&w=2070&auto=format&fit=crop" alt="" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Lasaña Clásica" aria-hidden="true"><img src="https://images.unsplash.com/photo-1574894709920-11b28e7367e3?q=80&w=2070&auto=format&fit=crop" alt="" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Tagliatelle al Ragú" aria-hidden="true"><img src="https://images.unsplash.com/photo-1551183053-bf91a1d81141?q=80&w=2070&auto=format&fit=crop" alt="" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Penne Arrabbiata" aria-hidden="true"><img src="https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?q=80&w=2070&auto=format&fit=crop" alt="" loading="lazy"></div>
+                    <div class="marquee-item" data-name="Fettuccine Alfredo" aria-hidden="true"><img src="https://images.unsplash.com/photo-1645112411341-6c4fd023714a?q=80&w=2070&auto=format&fit=crop" alt="" loading="lazy"></div>
                 </div>
             </div>
         </div>
@@ -524,6 +600,7 @@
                 <p>Asegure su experiencia gastronómica en Puerta Nueva</p>
             </div>
             <form class="reservations-form" id="reservation-form" data-aos="zoom-in">
+                <span class="serif-italic reservations-form-tagline">"Una mesa, una velada, un recuerdo mediterráneo"</span>
                 <div class="form-row">
                     <div class="form-group"><input type="text" name="nombre" placeholder="Nombre completo" required></div>
                     <div class="form-group"><input type="email" name="email" placeholder="Correo electrónico" required></div>
@@ -598,7 +675,14 @@
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         // ─── 1. AOS ───────────────────────────────────────────────────────────
-        AOS.init({ duration: 800, once: true, offset: 100, disable: prefersReducedMotion });
+        // Si el script de AOS (CDN externa) tarda o falla en cargar -algo más
+        // frecuente en redes móviles-, "AOS" no existe y llamarlo directamente
+        // detendría la ejecución de todo el script que va después (galería,
+        // parallax, formulario). Con esta comprobación, el resto de la página
+        // sigue funcionando aunque AOS no llegue a cargar.
+        if (typeof AOS !== 'undefined') {
+            AOS.init({ duration: 800, once: true, offset: 100, disable: prefersReducedMotion });
+        }
 
         // ─── 2. HEADER ────────────────────────────────────────────────────────
         // El header comienza con opacity:0 y translateY(-100%) en el CSS.
@@ -617,9 +701,27 @@
         window.addEventListener('scroll', updateHeader, { passive: true });
         updateHeader(); // Check inmediato al cargar
 
-        // ─── 3. MARQUEE & GALERÍA ─────────────────────────────────────────────
-        // Clase unificada para manejar desplazamiento infinito con arrastre.
-        // Funciona para marquee automático (pizzas/pastas) y galería manual.
+        // ─── 3. PARALLAX (hero + atardeceres) ──────────────────────────────────
+        // Usa transform en vez de background-attachment:fixed (que no funciona
+        // en Safari/Chrome de móvil), así que se ve igual en todos los dispositivos.
+        const parallaxLayers = document.querySelectorAll('.parallax-bg');
+
+        if (parallaxLayers.length && !prefersReducedMotion) {
+            const updateParallax = () => {
+                parallaxLayers.forEach(layer => {
+                    const rect = layer.parentElement.getBoundingClientRect();
+                    const shift = rect.top * 0.15;
+                    layer.style.transform = `translate3d(0, ${shift}px, 0)`;
+                });
+                requestAnimationFrame(updateParallax);
+            };
+            requestAnimationFrame(updateParallax);
+        }
+
+        // ─── 4. GALERÍA DEL LOCAL ───────────────────────────────────────────────
+        // Clase para el desplazamiento infinito con arrastre de "Nuestro Local".
+        // El marquee de pizzas/pastas ahora es CSS puro (más arriba), así que no
+        // depende de esta clase ni del evento "load".
         class ScrollTrack {
             constructor(track, options = {}) {
                 this.track       = track;
@@ -712,15 +814,18 @@
             }
         }
 
-        // ─── 4. INICIALIZAR cuando todo (incluidas imágenes) esté listo ───────
-        window.addEventListener('load', () => {
-            const pizzaTrack  = document.getElementById('pizza-track');
-            const pastaTrack  = document.getElementById('pasta-track');
-            const galleryTrack = document.getElementById('gallery-scroll');
+        // Se inicializa de inmediato (no hace falta esperar a "load"): las tarjetas
+        // tienen ancho/alto fijos por CSS, así que su medida no depende de que las
+        // imágenes hayan terminado de descargarse. Esperar a "load" era justo lo que
+        // hacía que en móvil, con red más lenta, la sección tardara o no arrancara
+        // hasta recargar la página.
+        const galleryTrack = document.getElementById('gallery-scroll');
+        if (galleryTrack) new ScrollTrack(galleryTrack, { speed: 0.5, direction: -1, autoScroll: !prefersReducedMotion });
 
-            if (pizzaTrack)   new ScrollTrack(pizzaTrack,  { speed: 0.6, direction:  1, autoScroll: !prefersReducedMotion });
-            if (pastaTrack)   new ScrollTrack(pastaTrack,  { speed: 0.6, direction: -1, autoScroll: !prefersReducedMotion });
-            if (galleryTrack) new ScrollTrack(galleryTrack, { speed: 0.5, direction: -1, autoScroll: !prefersReducedMotion });
+        // Red de seguridad: si alguna imagen tardía desplaza el alto de la página,
+        // recalculamos los disparadores de AOS cuando todo (incl. imágenes) cargó.
+        window.addEventListener('load', () => {
+            if (typeof AOS !== 'undefined') AOS.refresh();
         });
 
         // ─── 5. RESERVAS ──────────────────────────────────────────────────────
