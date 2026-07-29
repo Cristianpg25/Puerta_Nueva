@@ -39,6 +39,23 @@
         .serif-italic { font-family: 'Cormorant Garamond', serif; font-style: italic; }
         .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
         section { padding: 6rem 0; }
+        /* Evita que el header fijo tape el inicio de la sección al navegar por anclas */
+        section[id] { scroll-margin-top: 100px; }
+
+        a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+            outline: 2px solid var(--dorado-suave);
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
 
         .btn {
             display: inline-block; padding: 1rem 2.5rem; text-decoration: none;
@@ -168,7 +185,7 @@
             border: 1px solid var(--marron-madera);
             pointer-events: none;
         }
-        .marquee-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .marquee-item img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; user-select: none; }
         .marquee-item::after {
             content: attr(data-name);
             position: absolute; bottom: 0; left: 0; width: 100%;
@@ -232,7 +249,7 @@
             box-shadow: 20px 20px 40px rgba(0,0,0,0.5);
             pointer-events: none;
         }
-        .gallery-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .gallery-card img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; user-select: none; }
 
         /* Reservations */
         #reservations { background-color: var(--marron-madera); }
@@ -270,6 +287,8 @@
         }
         @media (max-width: 768px) {
             section { padding: 4rem 0; }
+            /* background-attachment: fixed no funciona en iOS Safari y puede solapar con el header fijo */
+            .hero, .terrace-atmosphere { background-attachment: scroll; }
             .nav-links, .nav-phone { display: none; }
             .logo-img { height: 40px; }
             .hero-logo-img { max-width: 70%; }
@@ -494,15 +513,15 @@
                 <div class="divider"></div>
                 <p>Asegure su experiencia gastronómica en Puerta Nueva</p>
             </div>
-            <form class="reservations-form" data-aos="zoom-in">
+            <form class="reservations-form" id="reservation-form" data-aos="zoom-in">
                 <div class="form-row">
-                    <div class="form-group"><input type="text" placeholder="Nombre completo" required></div>
-                    <div class="form-group"><input type="email" placeholder="Correo electrónico" required></div>
+                    <div class="form-group"><input type="text" name="nombre" placeholder="Nombre completo" required></div>
+                    <div class="form-group"><input type="email" name="email" placeholder="Correo electrónico" required></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><input type="date" required></div>
+                    <div class="form-group"><input type="date" name="fecha" required></div>
                     <div class="form-group">
-                        <select>
+                        <select name="personas">
                             <option>2 Personas</option>
                             <option>3 Personas</option>
                             <option>4 Personas</option>
@@ -512,7 +531,7 @@
                 </div>
                 <div class="form-group" style="text-align: center;">
                     <button type="submit" class="btn btn-primary" style="width: 100%;">Solicitar Reserva</button>
-                    <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--beige-arena);">o llámanos al <a href="tel:950096176" style="color: var(--dorado-suave); text-decoration: none;">950 096 176</a> | WhatsApp disponible</p>
+                    <p id="reservation-status" role="status" style="margin-top: 1rem; font-size: 0.85rem; color: var(--beige-arena);">o llámanos al <a href="tel:950096176" style="color: var(--dorado-suave); text-decoration: none;">950 096 176</a> | WhatsApp disponible</p>
                 </div>
             </form>
         </div>
@@ -565,8 +584,11 @@
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
+        // ─── 0. Accesibilidad: respetar prefers-reduced-motion ────────────────
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
         // ─── 1. AOS ───────────────────────────────────────────────────────────
-        AOS.init({ duration: 800, once: true, offset: 100 });
+        AOS.init({ duration: 800, once: true, offset: 100, disable: prefersReducedMotion });
 
         // ─── 2. HEADER ────────────────────────────────────────────────────────
         // El header comienza con opacity:0 y translateY(-100%) en el CSS.
@@ -686,10 +708,40 @@
             const pastaTrack  = document.getElementById('pasta-track');
             const galleryTrack = document.getElementById('gallery-scroll');
 
-            if (pizzaTrack)   new ScrollTrack(pizzaTrack,  { speed: 0.6, direction:  1 });
-            if (pastaTrack)   new ScrollTrack(pastaTrack,  { speed: 0.6, direction: -1 });
-            if (galleryTrack) new ScrollTrack(galleryTrack, { speed: 0.5, direction: -1 });
+            if (pizzaTrack)   new ScrollTrack(pizzaTrack,  { speed: 0.6, direction:  1, autoScroll: !prefersReducedMotion });
+            if (pastaTrack)   new ScrollTrack(pastaTrack,  { speed: 0.6, direction: -1, autoScroll: !prefersReducedMotion });
+            if (galleryTrack) new ScrollTrack(galleryTrack, { speed: 0.5, direction: -1, autoScroll: !prefersReducedMotion });
         });
+
+        // ─── 5. RESERVAS ──────────────────────────────────────────────────────
+        // No hay backend: en vez de recargar la página (y perder lo escrito),
+        // se valida el formulario y se envía la solicitud por WhatsApp.
+        const reservationForm = document.getElementById('reservation-form');
+        const reservationStatus = document.getElementById('reservation-status');
+
+        if (reservationForm) {
+            reservationForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                if (!reservationForm.checkValidity()) {
+                    reservationForm.reportValidity();
+                    return;
+                }
+
+                const data = new FormData(reservationForm);
+                const nombre = data.get('nombre').trim();
+                const fecha = data.get('fecha');
+                const personas = data.get('personas');
+                const mensaje = `Hola, soy ${nombre}. Quiero reservar mesa para ${personas} el día ${fecha}.`;
+
+                window.open(`https://wa.me/34950096176?text=${encodeURIComponent(mensaje)}`, '_blank', 'noopener');
+
+                if (reservationStatus) {
+                    reservationStatus.textContent = 'Te hemos redirigido a WhatsApp para confirmar tu reserva. Si no se abrió, llámanos al 950 096 176.';
+                }
+                reservationForm.reset();
+            });
+        }
     </script>
 </body>
 </html>
