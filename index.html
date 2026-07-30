@@ -162,7 +162,17 @@
         .cuisine-info p { color: var(--beige-arena); font-size: 0.9rem; }
 
         /* Terrace Atmosphere */
-        .terrace-atmosphere { height: 60vh; background-color: var(--negro-suave); display: flex; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; }
+        /* En escritorio, CSS puro con background-attachment:fixed: el fondo
+           queda fijo y se va revelando mientras el contenido hace scroll. */
+        .terrace-atmosphere {
+            height: 60vh;
+            background: url('https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat fixed;
+            background-color: var(--negro-suave);
+            display: flex; align-items: center; justify-content: center; text-align: center;
+            position: relative; overflow: hidden;
+        }
+        /* En escritorio no hace falta la capa con JS: se oculta */
+        .terrace-atmosphere .parallax-bg { display: none; }
         .terrace-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(43,43,43,0.6); }
         .terrace-content { position: relative; z-index: 2; color: var(--blanco-roto); }
 
@@ -361,6 +371,10 @@
         }
         @media (max-width: 768px) {
             section { padding: 4rem 0; }
+            /* background-attachment:fixed no se renderiza en Safari/Chrome de móvil:
+               se desactiva y se muestra en su lugar la capa con parallax por JS. */
+            .terrace-atmosphere { background-attachment: scroll; }
+            .terrace-atmosphere .parallax-bg { display: block; }
             .nav-links, .nav-phone { display: none; }
             .logo-img { height: 40px; }
             .hero-logo-img { max-width: 70%; }
